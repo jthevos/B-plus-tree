@@ -14,7 +14,7 @@ class Node(object):
     Attributes:
         order (int): The maximum number of keys each node can hold.
     """
-    def __init__(self, order):
+    def __init__(self, order=4):
         """Child nodes can be converted into parent nodes by setting self.is_leaf = False. Parent nodes
         simply act as a medium to traverse the tree."""
         self.order = order
@@ -84,23 +84,24 @@ class Node(object):
                 item.show(counter + 1)
 
 class BPlusTree:
-    """B+ tree object, consisting of nodes.
-    Nodes will automatically be split into two once it is full. When a split occurs, a key will
-    'float' upwards and be inserted into the parent node to act as a pivot.
-    Attributes:
-        order (int): The maximum number of keys each node can hold.
+    """B+ tree object, consisting of nodes. Nodes will automatically be split into two once full. 
+    If a split is required, a new key will be interted into the main tree and act as a pivot for 
+    the tree to self-balance.
+
+    `_find` and `_merge` are only used interally by `insert` and `retrieve` respectively.
     """
     def __init__(self, order=4):
+        """Only a single node is required to begin the tree."""
         self.root = Node(order)
 
     def _find(self, node, key):
-        """ For a given node and key, returns the index where the key should be inserted and the
+        """ For a given node and key, return the index where the key should be inserted and the
         list of values at that index."""
         for i, item in enumerate(node.keys):
             if key < item:
-                return node.values[i], i
+                return i, node.values[i]
 
-        return node.values[i + 1], i + 1
+        return i + 1, node.values[i + 1] 
 
     def _merge(self, parent, child, index):
         """For a parent and child node, extract a pivot from the child to be inserted into the keys
@@ -129,7 +130,7 @@ class BPlusTree:
         # Traverse tree until leaf node is reached.
         while not child.is_leaf:
             parent = child
-            child, index = self._find(child, key)
+            index, child = self._find(child, key)
 
         child.add(key, value)
 
@@ -147,7 +148,7 @@ class BPlusTree:
         child = self.root
 
         while not child.is_leaf:
-            child, index = self._find(child, key)
+            _ , child = self._find(child, key)
 
         for i, item in enumerate(child.keys):
             if key == item:
@@ -161,8 +162,8 @@ class BPlusTree:
 
 
 
-def demo_bplustree(order=12):
-    bplustree = BPlusTree(order=order)
+def demo_bplustree(order):
+    bplustree = BPlusTree(order)
     print(f'\nB+ tree with {order} item(s)...')
     bplustree.insert(str(0), 'nulla')
     for i in range(1, order + 1):
@@ -180,5 +181,5 @@ if __name__ == '__main__':
     print(parser.format_help())
 
     parser_args=parser.parse_args()
-    order = parser_args.order
+    order = parser_args.order or 4
     demo_bplustree(order=order)
